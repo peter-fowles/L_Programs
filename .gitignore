@@ -1,0 +1,9 @@
+# Ignore these file extensions
+
+# Ignore files containing these words
+*temp*
+*test*
+*Test*
+
+# Ignore these directories
+__pycache__
