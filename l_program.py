@@ -39,7 +39,7 @@ class L_Program:
             self.instructions.append(ins)
         self.program_length = len(self.instructions)
 
-    def run(self, input_values:dict) -> int:
+    def run(self, input_values:dict, show_snapshots:bool=False) -> int:
         var_values = {'Y':0}
         if 'Y' in input_values and input_values['Y'] != 0:
             raise ValueError('The output variable \"Y\" cannot be initialized to anything other than 0')
@@ -53,6 +53,8 @@ class L_Program:
         done = False
         curr_index = 0
         while not done:
+            if show_snapshots:
+                print(f'({curr_index + 1}, {{{",".join([v + ':' + str(var_values[v]) for v in var_values])}}})')
             curr_instruction = self.instructions[curr_index]
             if curr_instruction.goto is not None and var_values[curr_instruction.variable] != 0:
                 if curr_instruction.goto not in self.labels:
@@ -69,6 +71,8 @@ class L_Program:
                     elif var_values[curr_instruction.variable] > 0:
                         var_values[curr_instruction.variable] -= 1
                 curr_index += 1
+        if show_snapshots:
+            print(f'({self.program_length + 1}, {{{",".join([v + ':' + str(var_values[v]) for v in var_values])}}})')
         return var_values['Y']
     
     def source_number(self) -> int:
