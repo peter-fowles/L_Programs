@@ -1,4 +1,5 @@
 from sympy import prime
+from l_program import L_Program
 
 def natural_number(godel:list) -> int:
     if len(godel) < 1:
@@ -13,7 +14,7 @@ def factor_godel(x:int) -> list:
     i = 1
     while natural_number(seq) != x:
         t = 0
-        while t < x and x % (prime(i)**(t + 1)) == 0:
+        while t < x and (x % (prime(i)**(t + 1)) == 0):
             t += 1
         seq.append(t)
         i += 1
@@ -56,3 +57,8 @@ def encode_instruction(variables:list, labels:list, instruction:str) -> int:
 def compute_instruction(a, b, c):
     right = 2**b * (2 * c + 1) - 1
     return 2**a * (2 * right + 1) - 1
+
+def program_from_number(n:int) -> 
+
+if __name__ == '__main__':
+    print(factor_godel(2**21))

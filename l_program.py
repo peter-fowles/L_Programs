@@ -15,21 +15,34 @@ GROUPS = {
 }
 
 class L_Program:
-    def __init__(self, filename:str):
-        self.variables = ['Y']
+    def __init__(self, filename:str=None, lines:list=None):
+        self.variables = []
         self.labels = []
         self.instructions = []
         self.longest_label = 0
-        with open(filename, 'r') as f:
-            for line in f:    
-                print(line)
-                ins = self.Instruction(line)
-                if ins.variable not in self.variables:
-                    self.variables.append(ins.variable)
-                if ins.label and ins.label not in self.labels:
-                    self.labels.append(ins.label)
-                    self.longest_label = max(len(ins.label), self.longest_label)
-                self.instructions.append(ins)
+        if filename is not None:
+            if lines is not None:
+                raise ValueError('Cannot have a filename and a list of lines')
+            with open(filename, 'r') as f:
+                for line in f:    
+                    ins = self.Instruction(line)
+                    if ins.variable not in self.variables:
+                        self.variables.append(ins.variable)
+                    if ins.label and ins.label not in self.labels:
+                        self.labels.append(ins.label)
+                        self.longest_label = max(len(ins.label), self.longest_label)
+                    self.instructions.append(ins)
+        elif lines is None:
+            raise ValueError('No arguments were given')
+        else:
+            for line in lines:
+                    ins = self.Instruction(line)
+                    if ins.variable not in self.variables:
+                        self.variables.append(ins.variable)
+                    if ins.label and ins.label not in self.labels:
+                        self.labels.append(ins.label)
+                        self.longest_label = max(len(ins.label), self.longest_label)
+                    self.instructions.append(ins)
         self.program_length = len(self.instructions)
 
     def __encode_instruction(self, ins):
@@ -45,18 +58,19 @@ class L_Program:
             b = 2
         else:
             b = 0
-        c = self.variables.index(ins.variable)
+        c = self.variables.index(ins.variable) + 1
 
         right = 2**b * (2 * c + 1) - 1
         return 2**a * (2 * right + 1) - 1
     
-    def encode(self, godel=True):
+    def encode(self):
+        return natural_number(self.godel_number()) - 1
+    
+    def godel_number(self):
         num_p = []
         for ins in self.instructions:
             num_p.append(self.__encode_instruction(ins))
-        if godel:
-            return str(num_p) + ' - 1'
-        return natural_number(num_p) - 1
+        return num_p
 
     def __repr__(self):
         s = []
@@ -76,18 +90,20 @@ class L_Program:
 
             labelled = LABELLED.search(line)
             cmd = COMMAND.search(line)
+            var = None
 
             if cmd is None or not cmd.group():
                 raise SyntaxError(f'Invalid Instruction \"{line.strip()}\"')
             if labelled is not None:
                 self.label = labelled.group(0)[1:-1]
             if cmd.group(GROUPS['ifvar']):
-                self.variable = cmd.group(GROUPS['ifvar'])
+                var = cmd.group(GROUPS['ifvar'])
             elif cmd.group(GROUPS['v1']) != cmd.group(GROUPS['v2']):
                 raise ValueError("Only one variable may be referenced per instruction")
             else:
-                self.variable = cmd.group(GROUPS['v1'])
+                var = cmd.group(GROUPS['v1'])
 
+            self.variable = var
             self.text = line.strip()
             self.groups = cmd.groups()
 
