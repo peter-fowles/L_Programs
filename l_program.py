@@ -19,6 +19,7 @@ class L_Program:
     def __init__(self, filename:str=None, lines:list=None):
         self.variables = []
         self.labels = []
+        self.label_lines = dict()
         self.instructions = []
         self.longest_label = 0
         if filename is not None:
@@ -27,6 +28,7 @@ class L_Program:
             lines = open(filename, 'r')
         elif lines is None:
             raise ValueError('No arguments were given')
+        line_num = 1
         for line in lines:
             if not line.strip() or IGNORE.match(line) is not None:
                 continue 
@@ -35,11 +37,14 @@ class L_Program:
                 self.variables.append(ins.variable)
             if ins.label and ins.label not in self.labels:
                 self.labels.append(ins.label)
+                self.label_lines[ins.label] = line_num
                 self.longest_label = max(len(ins.label), self.longest_label)
             self.instructions.append(ins)
+            line_num += 1
         self.program_length = len(self.instructions)
 
     def run(self, input_values:dict, show_snapshots:bool=False) -> int:
+        # Initialize Variables
         var_values = {'Y':0}
         if 'Y' in input_values and input_values['Y'] != 0:
             raise ValueError('The output variable \"Y\" cannot be initialized to anything other than 0')
@@ -50,6 +55,7 @@ class L_Program:
                 var_values[v] = input_values[v]
             else:
                 var_values[v] = 0
+
         done = False
         curr_index = 0
         while not done:
@@ -57,13 +63,10 @@ class L_Program:
                 print(f'({curr_index + 1}, {{{",".join([v + ':' + str(var_values[v]) for v in var_values])}}})')
             curr_instruction = self.instructions[curr_index]
             if curr_instruction.goto is not None and var_values[curr_instruction.variable] != 0:
-                if curr_instruction.goto not in self.labels:
+                if curr_instruction.goto not in self.label_lines:
                     done = True
                 else:
-                    for i in range(len(self.instructions)):
-                        if self.instructions[i].label == curr_instruction.goto:
-                            curr_index = i
-                            break
+                    curr_index = self.label_lines[curr_instruction.goto] - 1
             else: 
                 if curr_instruction.op is not None:
                     if curr_instruction.op == '+':
@@ -85,7 +88,7 @@ class L_Program:
             a = 0
         if ins.groups[GROUPS['iflabel'] - 1] is not None:
             iflabel = ins.groups[GROUPS['iflabel'] - 1]
-            if iflabel not in self.labels:
+            if iflabel not in self.label_lines:
                 b = len(self.labels) + 2
             else:
                 b = self.labels.index(iflabel) + 3
