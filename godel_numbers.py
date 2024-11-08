@@ -9,10 +9,10 @@ def natural_number(godel:list) -> int:
         num *= prime(i + 1) ** godel[i]
     return num
 
-def factor_godel(x:int) -> list:
+def factor_godel(x:int, n:int=0) -> list:
     seq = []
     i = 1
-    while natural_number(seq) != x:
+    while natural_number(seq) != x or len(seq) < n:
         t = 0
         while t < x and (x % (prime(i)**(t + 1)) == 0):
             t += 1
