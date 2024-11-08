@@ -1,4 +1,5 @@
 from sympy import prime
+from math import sqrt
 
 def natural_number(godel:list) -> int:
     if len(godel) < 1:
@@ -23,17 +24,8 @@ def length_natural(x:int) -> int:
     return len(factor_godel(x))
 
 def split_natural_number(z):
-    left = -1
-    right = -1
-    for x in range(z + 1):
-        for y in range(z + 1):
-            if 2**x * (2 * y + 1) - 1 == z:
-                if left < 0:
-                    left = x
-    for y in range(z + 1):
-        for x in range(z + 1):
-            if 2**x * (2 * y + 1) - 1 == z:
-                if right < 0:
-                    right = y
-
-    return left, right
+    for x in range(int(sqrt(z)), -1, -1):
+        if (z + 1) % 2**x == 0:
+            break
+    y = (((z + 1) // 2**x) - 1) // 2
+    return x, y
