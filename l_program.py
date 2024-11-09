@@ -1,5 +1,5 @@
 import re
-from godel_numbers import natural_number, factor_godel
+from godel_numbers import natural_number, factor_godel, split_natural_number
 
 LABELLED = re.compile(r'\[(\w+)\]')
 COMMAND = re.compile(r'IF (\w+) != 0 GOTO (\w+)|(\w+) <- (\w+)($|\n| ([+-]) (\d+))')
@@ -17,7 +17,7 @@ GROUPS = {
 
 class L_Program:
     def __init__(self, filename:str=None, lines:list=None):
-        self.variables = []
+        self.variables = ['Y']
         self.labels = []
         self.label_lines = dict()
         self.instructions = []
@@ -89,7 +89,7 @@ class L_Program:
         if ins.groups[GROUPS['iflabel'] - 1] is not None:
             iflabel = ins.groups[GROUPS['iflabel'] - 1]
             if iflabel not in self.label_lines:
-                b = len(self.labels) + 2
+                b = len(self.labels) + 3
             else:
                 b = self.labels.index(iflabel) + 3
         elif ins.groups[GROUPS['op'] - 1] == '+':
@@ -98,7 +98,7 @@ class L_Program:
             b = 2
         else:
             b = 0
-        c = self.variables.index(ins.variable) + 1
+        c = self.variables.index(ins.variable)
 
         right = 2**b * (2 * c + 1) - 1
         return 2**a * (2 * right + 1) - 1
@@ -163,5 +163,26 @@ class L_Program:
 def program_from_number(program_num:int) -> L_Program:
     source_num = program_num + 1
     instruction_nums = factor_godel(source_num)
+    lines = []
     for ins_num in instruction_nums:
-        pass
+        a, bc = split_natural_number(ins_num)
+        b, c = split_natural_number(bc)
+        if a == 0:
+            label = None
+        else:
+            label = f'L{a}'
+        if c + 1 == 1:
+            variable = 'Y'
+        else:
+            variable = f'X{c}'
+        instruction = '' if label is None else f'[{label}] '
+        if b == 0:
+            instruction = f'{instruction}{variable} <- {variable}'
+        elif b == 1:
+            instruction = f'{instruction}{variable} <- {variable} + 1'
+        elif b == 2:
+            instruction = f'{instruction}{variable} <- {variable} - 1'
+        else:
+            instruction = f'{instruction}IF {variable} != 0 GOTO L{b - 2}'
+        lines.append(instruction)
+    return L_Program(lines=lines)
