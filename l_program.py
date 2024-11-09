@@ -185,6 +185,6 @@ def program_from_number(program_num:int) -> L_Program:
         elif b == 2:
             instruction = f'{instruction}{variable} <- {variable} - 1'
         else:
-            instruction = f'{instruction}IF {variable} != 0 GOTO L{b - 2}'
+            instruction = f'{instruction}IF {variable} != 0 GOTO A{b - 2}'
         lines.append(instruction)
     return L_Program(lines=lines)
