@@ -172,11 +172,11 @@ def program_from_number(program_num:int) -> L_Program:
         if a == 0:
             label = None
         else:
-            label = f'L{a}'
+            label = f'A{a}'
         if c + 1 == 1:
             variable = 'Y'
         else:
-            variable = f'X{c}'
+            variable = f'X{c + 1}'
         instruction = '' if label is None else f'[{label}] '
         if b == 0:
             instruction = f'{instruction}{variable} <- {variable}'
