@@ -12,7 +12,7 @@ def natural_number(godel:list) -> int:
 def factor_godel(x:int, n:int=0) -> list:
     seq = []
     i = 1
-    while natural_number(seq) != x or len(seq) < n:
+    while natural_number(seq) != x and n == 0 or len(seq) < n:
         t = 0
         while t < x and (x % (prime(i)**(t + 1)) == 0):
             t += 1
