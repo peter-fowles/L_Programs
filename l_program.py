@@ -74,6 +74,8 @@ class L_Program:
                     elif var_values[curr_instruction.variable] > 0:
                         var_values[curr_instruction.variable] -= 1
                 curr_index += 1
+                if curr_index >= self.program_length:
+                    done = True
         if show_snapshots:
             print(f'({self.program_length + 1}, {{{",".join([v + ':' + str(var_values[v]) for v in var_values])}}})')
         return var_values['Y']
