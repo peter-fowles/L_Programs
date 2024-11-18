@@ -60,6 +60,8 @@ class L_Program:
         if 'Y' in input_values and input_values['Y'] != 0:
             raise ValueError('The output variable \"Y\" cannot be initialized to anything other than 0')
         for v in input_values:
+            if variable_number(v) % 2 != 0:
+                raise ValueError('Only variables containing \"X\" can be initialized')
             if v not in var_values:
                 var_values[v] = input_values[v]
 
