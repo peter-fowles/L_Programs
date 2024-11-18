@@ -5,7 +5,7 @@ LABELLED = re.compile(r'\[(([A-E])(\d+))\]')
 COMMAND = re.compile(r'IF (\w+) != 0 GOTO (\w+)|(\w+) <- (\w+)($|\n| ([+-]) (\d+))')
 IGNORE = re.compile(r'#.*')
 
-GROUPS = {
+COMMAND_GROUPS = {
     'instruction':0,
     'ifvar':1,
     'iflabel':2,
@@ -17,6 +17,13 @@ GROUPS = {
 
 class L_Program:
     def __init__(self, filename:str=None, lines:list=None):
+        """
+        Constructs an executable L-Program
+
+        Keyword Arguments (only use one):
+        filename -- a file containing an L-Program to interpret
+        lines -- a list of strings where each string is an instruction in an L-program to interpret
+        """
         self.label_lines = dict()
         self.instructions = []
         self.longest_label = 0
@@ -39,6 +46,15 @@ class L_Program:
         self.program_length = len(self.instructions)
 
     def run(self, input_values:dict, show_snapshots:bool=False) -> int:
+        """
+        Runs the program
+
+        Positional Arguments:
+        input_values -- A dictionary mapping state variables to their initial values
+
+        Keyword Arguments:
+        show_snapshots -- A boolean indicating whether to print each snapshot of the computation
+        """
         # Initialize Variables
         var_values = {'Y':0}
         if 'Y' in input_values and input_values['Y'] != 0:
@@ -74,18 +90,31 @@ class L_Program:
         return var_values['Y']
     
     def source_number(self) -> int:
+        """
+        returns the source number of the program
+        (source number is the program number + 1)
+        """
         return self.program_number() + 1
     
     def program_number(self) -> int:
+        """
+        returns the program number of the program as a natural number
+        """
         return natural_number(self.godel_number()) - 1
     
     def godel_number(self) -> list:
+        """
+        returns the godel number for the program
+        """
         num_p = []
         for ins in self.instructions:
             num_p.append(ins.encode())
         return num_p
 
     def __repr__(self) -> str:
+        """
+        returns the program's instructions
+        """
         s = []
         line_num = 1
         for ins in self.instructions:
@@ -98,6 +127,13 @@ class L_Program:
 
     class Instruction:
         def __init__(self, line:str):
+            """
+            Constructor for an Instruction object
+            Contains data for a single instruction in an L-program
+
+            positional arguments:
+            line -- a single line, or the text of a single instruction, of an L-program
+            """
             self.label = None
 
             labelled = LABELLED.search(line)
@@ -108,33 +144,39 @@ class L_Program:
                 raise SyntaxError(f'Invalid Instruction \"{line.strip()}\"')
             if labelled is not None:
                 self.label = labelled.group(0)[1:-1]
-            if cmd.group(GROUPS['ifvar']):
-                var = cmd.group(GROUPS['ifvar'])
-            elif cmd.group(GROUPS['v1']) != cmd.group(GROUPS['v2']):
+            if cmd.group(COMMAND_GROUPS['ifvar']):
+                var = cmd.group(COMMAND_GROUPS['ifvar'])
+            elif cmd.group(COMMAND_GROUPS['v1']) != cmd.group(COMMAND_GROUPS['v2']):
                 raise ValueError("Only one variable may be referenced per instruction")
             else:
-                var = cmd.group(GROUPS['v1'])
+                var = cmd.group(COMMAND_GROUPS['v1'])
 
             self.variable = var
-            self.goto = cmd.group(GROUPS['iflabel'])
-            self.op = cmd.group(GROUPS['op'])
+            self.goto = cmd.group(COMMAND_GROUPS['iflabel'])
+            self.op = cmd.group(COMMAND_GROUPS['op'])
             self.text = line.strip()
             self.groups = cmd.groups()
 
         def __repr__(self) -> str:
+            """
+            returns the text for the instruction
+            """
             return self.text
         
         def encode(self) -> int:
+            """
+            encodes the instruction into its natural number representation
+            """
             if self.label is not None:
                 a = label_number(self.label)
             else:
                 a = 0
-            if self.groups[GROUPS['iflabel'] - 1] is not None:
-                iflabel = self.groups[GROUPS['iflabel'] - 1]
+            if self.groups[COMMAND_GROUPS['iflabel'] - 1] is not None:
+                iflabel = self.groups[COMMAND_GROUPS['iflabel'] - 1]
                 b = label_number(iflabel) + 2
-            elif self.groups[GROUPS['op'] - 1] == '+':
+            elif self.groups[COMMAND_GROUPS['op'] - 1] == '+':
                 b = 1
-            elif self.groups[GROUPS['op'] - 1] == '-':
+            elif self.groups[COMMAND_GROUPS['op'] - 1] == '-':
                 b = 2
             else:
                 b = 0
@@ -145,6 +187,9 @@ class L_Program:
 
 
         def latex(self) -> str:
+            """
+            returns a mathematical representation of the instruction in LaTeX syntax
+            """
             s = f'[{self.label}] ' if self.label else ''
             if self.goto:
                 return s + f'IF {self.variable} \\neq 0 GOTO {self.goto}'
@@ -154,6 +199,13 @@ class L_Program:
 
 
 def program_from_number(program_num:int) -> L_Program:
+    """
+    constructs the L-program associated with a natural number
+    returns the L-program
+
+    positional arguments:
+    program_num -- a natural number to be decoded into an L-program
+    """
     source_num = program_num + 1
     instruction_nums = factor_godel(source_num)
     lines = []
@@ -181,6 +233,14 @@ def program_from_number(program_num:int) -> L_Program:
     return L_Program(lines=lines)
 
 def label_number(label:str) -> int:
+    """
+    gets the number mapped to a given label
+
+    returns the number (> 0) mapped to the label
+
+    positional arguments:
+    label -- a valid label for an L-program 
+    """
     label_components = re.compile(r'([A-E])(\d+)')
     label_match = label_components.search(label)
     letter = label_match.group(1)
@@ -188,14 +248,42 @@ def label_number(label:str) -> int:
     return (ord(letter) - 64) + (5 * (int(number) - 1))
 
 def label_from_number(num:int) -> str:
+    """
+    gets the label mapped to a given number
+
+    returns the L-program label mapped to the given number
+
+    positional arguments:
+    num -- a natural number (> 0) to extract the label for
+    """
+    if num < 1:
+        raise ValueError('Labels can only be mapped to numbers greater than or equal to 1')
     return ['A', 'B', 'C', 'D', 'E'][(num - 1) % 5] + str((num - 1) // 5 + 1)
 
 def var_from_number(num:int) -> str:
+    """
+    gets the variable mapped to a given number
+
+    returns the L-program variable mapped to the given number
+
+    positional arguments:
+    num -- a natural number (> 0) to extract the variable for
+    """
     if num == 1:
         return 'Y'
+    elif num < 1:
+        raise ValueError('Variables can only be mapped to numbers greater than or equal to 1')
     return ['X', 'Z'][(num - 2) % 2] + str((num - 3) // 2 + 1)
 
 def variable_number(variable:str) -> int:
+    """
+    gets the number mapped to a given variable
+
+    returns the number (> 0) mapped to the variable
+
+    positional arguments:
+    variable -- a valid variable for an L-program 
+    """
     if variable == 'Y':
         return 1
     variable_components = re.compile(r'([XZ])(\d+)')
