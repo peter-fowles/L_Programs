@@ -1,7 +1,7 @@
 import re
 from godel_numbers import natural_number, factor_godel, split_natural_number
 
-LABELLED = re.compile(r'\[(\w+)\]')
+LABELLED = re.compile(r'\[(([A-E])(\d+))\]')
 COMMAND = re.compile(r'IF (\w+) != 0 GOTO (\w+)|(\w+) <- (\w+)($|\n| ([+-]) (\d+))')
 IGNORE = re.compile(r'#.*')
 
@@ -14,11 +14,9 @@ GROUPS = {
     'op':6,
     'val':7
 }
-
+# TODO Create a universal mapping for all variables and labels instead of just the ones in use
 class L_Program:
     def __init__(self, filename:str=None, lines:list=None):
-        self.variables = ['Y']
-        self.labels = []
         self.label_lines = dict()
         self.instructions = []
         self.longest_label = 0
@@ -33,10 +31,7 @@ class L_Program:
             if not line.strip() or IGNORE.match(line) is not None:
                 continue 
             ins = self.Instruction(line)
-            if ins.variable not in self.variables:
-                self.variables.append(ins.variable)
-            if ins.label and ins.label not in self.labels:
-                self.labels.append(ins.label)
+            if ins.label:
                 self.label_lines[ins.label] = line_num
                 self.longest_label = max(len(ins.label), self.longest_label)
             self.instructions.append(ins)
@@ -48,13 +43,9 @@ class L_Program:
         var_values = {'Y':0}
         if 'Y' in input_values and input_values['Y'] != 0:
             raise ValueError('The output variable \"Y\" cannot be initialized to anything other than 0')
-        for v in self.variables:
-            if v in input_values:
-                if not isinstance(input_values[v], int) or input_values[v] < 0:
-                    raise ValueError("All input variables must be natural numbers")
+        for v in input_values:
+            if v not in var_values:
                 var_values[v] = input_values[v]
-            else:
-                var_values[v] = 0
 
         done = False
         curr_index = 0
@@ -62,6 +53,8 @@ class L_Program:
             if show_snapshots:
                 print(f'({curr_index + 1}, {{{",".join([v + ':' + str(var_values[v]) for v in var_values])}}})')
             curr_instruction = self.instructions[curr_index]
+            if curr_instruction.variable not in var_values:
+                var_values[curr_instruction.variable] = 0
             if curr_instruction.goto is not None and var_values[curr_instruction.variable] != 0:
                 if curr_instruction.goto not in self.label_lines:
                     done = True
@@ -82,28 +75,6 @@ class L_Program:
     
     def source_number(self) -> int:
         return self.program_number() + 1
-
-    def __encode_instruction(self, ins) -> int:
-        if ins.label is not None:
-            a = self.labels.index(ins.label) + 1
-        else:
-            a = 0
-        if ins.groups[GROUPS['iflabel'] - 1] is not None:
-            iflabel = ins.groups[GROUPS['iflabel'] - 1]
-            if iflabel not in self.label_lines:
-                b = len(self.labels) + 3
-            else:
-                b = self.labels.index(iflabel) + 3
-        elif ins.groups[GROUPS['op'] - 1] == '+':
-            b = 1
-        elif ins.groups[GROUPS['op'] - 1] == '-':
-            b = 2
-        else:
-            b = 0
-        c = self.variables.index(ins.variable)
-
-        right = 2**b * (2 * c + 1) - 1
-        return 2**a * (2 * right + 1) - 1
     
     def program_number(self) -> int:
         return natural_number(self.godel_number()) - 1
@@ -111,7 +82,7 @@ class L_Program:
     def godel_number(self) -> list:
         num_p = []
         for ins in self.instructions:
-            num_p.append(self.__encode_instruction(ins))
+            num_p.append(ins.encode())
         return num_p
 
     def __repr__(self):
@@ -153,6 +124,26 @@ class L_Program:
         def __repr__(self):
             return self.text
         
+        def encode(self):
+            if self.label is not None:
+                a = label_number(self.label)
+            else:
+                a = 0
+            if self.groups[GROUPS['iflabel'] - 1] is not None:
+                iflabel = self.groups[GROUPS['iflabel'] - 1]
+                b = label_number(iflabel) + 2
+            elif self.groups[GROUPS['op'] - 1] == '+':
+                b = 1
+            elif self.groups[GROUPS['op'] - 1] == '-':
+                b = 2
+            else:
+                b = 0
+            c = variable_number(self.variable) - 1
+
+            right = 2**b * (2 * c + 1) - 1
+            return 2**a * (2 * right + 1) - 1
+
+
         def latex(self):
             s = f'[{self.label}] ' if self.label else ''
             if self.goto:
@@ -188,3 +179,29 @@ def program_from_number(program_num:int) -> L_Program:
             instruction = f'{instruction}IF {variable} != 0 GOTO A{b - 2}'
         lines.append(instruction)
     return L_Program(lines=lines)
+
+def label_number(label:str) -> int:
+    label_components = re.compile(r'([A-E])(\d+)')
+    label_match = label_components.search(label)
+    letter = label_match.group(1)
+    number = label_match.group(2)
+    return (ord(letter) - 64) + (5 * (int(number) - 1))
+
+def label_from_number(num:int) -> str:
+    return ['A', 'B', 'C', 'D', 'E'][(num - 1) % 5] + str((num - 1) // 5 + 1)
+
+def var_from_number(num:int) -> str:
+    if num == 1:
+        return 'Y'
+    return ['X', 'Z'][(num - 2) % 2] + str((num - 3) // 2 + 1)
+
+def variable_number(variable:str) -> int:
+    if variable == 'Y':
+        return 1
+    variable_components = re.compile(r'([XZ])(\d+)')
+    var_match = variable_components.search(variable)
+    letter = var_match.group(1)
+    number = var_match.group(2)
+    if letter == 'X':
+        return 2 + (2 * (int(number) - 1))
+    return 3 + (2 * (int(number) - 1))

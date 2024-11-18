@@ -1,11 +1,11 @@
 # This is a comment!!
 
-[A] IF X != 0 GOTO B
-Z <- Z + 1
-IF Z != 0 GOTO E
-[B] X <- X - 1
+[A1] IF X1 != 0 GOTO B1
+Z1 <- Z1 + 1
+IF Z1 != 0 GOTO E1
+[B1] X1 <- X1 - 1
 Y <- Y + 1
 Y <- Y + 1
 Y <- Y + 1
-Z <- Z + 1
-IF Z != 0 GOTO A
+Z1 <- Z1 + 1
+IF Z1 != 0 GOTO A1
