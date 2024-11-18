@@ -1,5 +1,5 @@
 import re
-from godel_numbers import natural_number, factor_godel, split_natural_number
+from godel_numbers import natural_number_of_godel, factor_godel, split_natural_number
 
 LABELLED = re.compile(r'\[(([A-E])(\d+))\]')
 COMMAND = re.compile(r'IF (\w+) != 0 GOTO (\w+)|(\w+) <- (\w+)($|\n| ([+-]) (\d+))')
@@ -100,7 +100,7 @@ class L_Program:
         """
         returns the program number of the program as a natural number
         """
-        return natural_number(self.godel_number()) - 1
+        return natural_number_of_godel(self.godel_number()) - 1
     
     def godel_number(self) -> list:
         """

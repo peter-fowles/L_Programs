@@ -1,7 +1,7 @@
 from sympy import prime
 from math import sqrt
 
-def natural_number(godel) -> int:
+def natural_number_of_godel(godel) -> int:
     """
     returns the natural number represented by a godel number
 
@@ -28,7 +28,7 @@ def factor_godel(x:int, n:int=0) -> list:
     """
     seq = []
     i = 1
-    while natural_number(seq) != x and n == 0 or len(seq) < n:
+    while natural_number_of_godel(seq) != x and n == 0 or len(seq) < n:
         t = 0
         while t < x and (x % (prime(i)**(t + 1)) == 0):
             t += 1
