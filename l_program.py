@@ -110,6 +110,18 @@ class L_Program:
         for ins in self.instructions:
             num_p.append(ins.encode())
         return num_p
+    
+    def split_numerical_repr(self) -> str:
+        """
+        returns the natural number of the program, represented with its godel number, 
+        with each instruction number split into a, b, c such that the instruction number = <a, <b, c>>
+        """
+        result = []
+        for num in self.godel_number():
+            a, bc = split_natural_number(num)
+            b, c = split_natural_number(bc)
+            result.append(f'<{a},<{b},{c}>>')
+        return f'[{", ".join(result)}] - 1'
 
     def __repr__(self) -> str:
         """
