@@ -14,7 +14,7 @@ GROUPS = {
     'op':6,
     'val':7
 }
-# TODO Create a universal mapping for all variables and labels instead of just the ones in use
+
 class L_Program:
     def __init__(self, filename:str=None, lines:list=None):
         self.label_lines = dict()
@@ -85,7 +85,7 @@ class L_Program:
             num_p.append(ins.encode())
         return num_p
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         s = []
         line_num = 1
         for ins in self.instructions:
@@ -121,10 +121,10 @@ class L_Program:
             self.text = line.strip()
             self.groups = cmd.groups()
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return self.text
         
-        def encode(self):
+        def encode(self) -> int:
             if self.label is not None:
                 a = label_number(self.label)
             else:
@@ -144,7 +144,7 @@ class L_Program:
             return 2**a * (2 * right + 1) - 1
 
 
-        def latex(self):
+        def latex(self) -> str:
             s = f'[{self.label}] ' if self.label else ''
             if self.goto:
                 return s + f'IF {self.variable} \\neq 0 GOTO {self.goto}'
